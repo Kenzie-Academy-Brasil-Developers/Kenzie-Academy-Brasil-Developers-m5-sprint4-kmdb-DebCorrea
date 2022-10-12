@@ -13,7 +13,7 @@ class UserSerializer(serializers.Serializer):
                 queryset=User.objects.all(),
                 message="username already exists",
             )
-        ]
+        ],
     )
     email = serializers.EmailField(
         max_length=127,
@@ -22,7 +22,7 @@ class UserSerializer(serializers.Serializer):
                 queryset=User.objects.all(),
                 message="email already exists",
             )
-        ]
+        ],
     )
     birthdate = serializers.DateField()
     first_name = serializers.CharField(max_length=50)
@@ -31,7 +31,7 @@ class UserSerializer(serializers.Serializer):
     bio = serializers.CharField(
         allow_blank=True,
         allow_null=True,
-        default=None
+        default=None,
     )
     is_critic = serializers.BooleanField(default=False)
     updated_at = serializers.DateTimeField(read_only=True)
@@ -41,3 +41,8 @@ class UserSerializer(serializers.Serializer):
         user = User.objects.create_user(**validated_data)
 
         return user
+
+
+class UserLoginSerializer(serializers.Serializer):
+    username = serializers.CharField(write_only=True)
+    password = serializers.CharField(write_only=True)
