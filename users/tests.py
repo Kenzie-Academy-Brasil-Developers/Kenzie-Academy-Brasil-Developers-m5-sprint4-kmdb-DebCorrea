@@ -4,10 +4,10 @@ from rest_framework.test import APITestCase
 from users.models import User
 
 
-class UsersViewsTests(APITestCase):
+class UserRegisterViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.BASE_URL = "/api/users"
+        cls.BASE_URL = "/api/users/register/"
 
         cls.critic_data = {
             "username": "lucira",
@@ -23,7 +23,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se o usuário é criado propriamente com dados corretos
         """
-        response = self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        response = self.client.post(self.BASE_URL, self.critic_data)
 
         self.assertEqual(response.status_code, 201)
 
@@ -33,7 +33,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se a senha está sendo hasheada corretamente para permanência no banco
         """
-        self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        self.client.post(self.BASE_URL, self.critic_data)
 
         user = User.objects.get(id=1)
 
@@ -43,7 +43,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se o retorno da requisição tem as chaves esperadas
         """
-        response = self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        response = self.client.post(self.BASE_URL, self.critic_data)
 
         expected_keys = {
             "id",
@@ -64,9 +64,9 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se propriedades `username` e `email` tem constraint unique
         """
-        self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        self.client.post(self.BASE_URL, self.critic_data)
 
-        response = self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        response = self.client.post(self.BASE_URL, self.critic_data)
 
         self.assertEqual(response.status_code, 400)
 
@@ -82,7 +82,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se requisição retorna erro com chaves faltando no body
         """
-        response = self.client.post(f"{self.BASE_URL}/register/", {})
+        response = self.client.post(self.BASE_URL, {})
 
         self.assertEqual(response.status_code, 400)
 
