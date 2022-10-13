@@ -1,13 +1,14 @@
+from rest_framework.authtoken.models import Token
 from rest_framework.exceptions import ValidationError
 from rest_framework.test import APITestCase
 
 from users.models import User
 
 
-class UsersViewsTests(APITestCase):
+class UserRegisterViewTests(APITestCase):
     @classmethod
     def setUpTestData(cls) -> None:
-        cls.BASE_URL = "/api/users"
+        cls.BASE_URL = "/api/users/register/"
 
         cls.critic_data = {
             "username": "lucira",
@@ -23,7 +24,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se o usuário é criado propriamente com dados corretos
         """
-        response = self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        response = self.client.post(self.BASE_URL, self.critic_data)
 
         self.assertEqual(response.status_code, 201)
 
@@ -33,7 +34,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se a senha está sendo hasheada corretamente para permanência no banco
         """
-        self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        self.client.post(self.BASE_URL, self.critic_data)
 
         user = User.objects.get(id=1)
 
@@ -43,7 +44,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se o retorno da requisição tem as chaves esperadas
         """
-        response = self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        response = self.client.post(self.BASE_URL, self.critic_data)
 
         expected_keys = {
             "id",
@@ -64,9 +65,9 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se propriedades `username` e `email` tem constraint unique
         """
-        self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        self.client.post(self.BASE_URL, self.critic_data)
 
-        response = self.client.post(f"{self.BASE_URL}/register/", self.critic_data)
+        response = self.client.post(self.BASE_URL, self.critic_data)
 
         self.assertEqual(response.status_code, 400)
 
@@ -82,7 +83,7 @@ class UsersViewsTests(APITestCase):
         """
         Verifica se requisição retorna erro com chaves faltando no body
         """
-        response = self.client.post(f"{self.BASE_URL}/register/", {})
+        response = self.client.post(self.BASE_URL, {})
 
         self.assertEqual(response.status_code, 400)
 
@@ -97,3 +98,74 @@ class UsersViewsTests(APITestCase):
                 "password": ["This field is required."],
             },
         )
+
+
+class UserLoginViewTests(APITestCase):
+    @classmethod
+    def setUpTestData(cls) -> None:
+        cls.BASE_URL = "/api/users/login/"
+
+        cls.critic_data = {
+            "username": "lucira",
+            "email": "lucira@mail.com",
+            "birthdate": "1999-09-09",
+            "first_name": "Lucira",
+            "last_name": "Critica",
+            "password": "1234",
+            "is_critic": True,
+        }
+
+    def test_can_log_user(self):
+        """
+        Verifica se usuário com credenciais válidas faz o login e recebe o token corretamente
+        """
+        self.client.post("/api/users/register/", self.critic_data)
+
+        response = self.client.post(
+            self.BASE_URL,
+            {
+                "username": self.critic_data["username"],
+                "password": self.critic_data["password"],
+            },
+        )
+
+        token = Token.objects.get(user_id=1)
+
+        self.assertEqual(response.status_code, 200)
+
+        self.assertEqual(response.data, {"token": token.key})
+
+    def test_missing_keys_error(self):
+        """
+        Verifica se a requisição com chaves faltando retorna o erro esperado
+        """
+        response = self.client.post(self.BASE_URL, {})
+
+        self.assertEqual(response.status_code, 400)
+
+        self.assertRaisesMessage(
+            KeyError,
+            {
+                "username": ["This field is required."],
+                "password": ["This field is required."],
+            },
+        )
+
+    def test_can_not_log_invalid_user(self):
+        """
+        Verifica se usuário com credenciais inválidas retorna erro
+        """
+
+        self.client.post("/api/users/register/", self.critic_data)
+
+        response = self.client.post(
+            self.BASE_URL,
+            {
+                "username": self.critic_data["username"],
+                "password": "123",
+            },
+        )
+
+        self.assertEqual(response.status_code, 400)
+
+        self.assertEqual(response.data, {"detail": "invalid username or password"})
