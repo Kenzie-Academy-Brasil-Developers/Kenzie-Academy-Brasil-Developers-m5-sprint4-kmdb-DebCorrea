@@ -41,3 +41,10 @@ class MovieDetailView(APIView):
         movie_obj = MovieSerializer(movie)
 
         return Response(movie_obj.data)
+
+    def delete(self, request: Request, movie_id: int) -> Response:
+        movie = get_object_or_404(Movie, id=movie_id)
+
+        movie.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
