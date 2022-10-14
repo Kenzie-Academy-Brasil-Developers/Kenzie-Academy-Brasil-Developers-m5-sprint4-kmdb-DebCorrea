@@ -1,13 +1,14 @@
+from django.shortcuts import get_object_or_404
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView, Request, Response, status
 
 from movies.serializers import MovieSerializer
 
-from .permissions import IsAdminOrReadOnly
 from .models import Movie
+from .permissions import IsAdminOrReadOnly
 
 
-class MovieViews(APIView):
+class MovieView(APIView):
     authentication_classes = [TokenAuthentication]
 
     permission_classes = [IsAdminOrReadOnly]
@@ -27,3 +28,16 @@ class MovieViews(APIView):
         movies_serializer = MovieSerializer(movies, many=True)
 
         return Response(movies_serializer.data)
+
+
+class MovieDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+
+    permission_classes = [IsAdminOrReadOnly]
+
+    def get(self, request: Request, movie_id: int) -> Response:
+        movie = get_object_or_404(Movie, id=movie_id)
+
+        movie_obj = MovieSerializer(movie)
+
+        return Response(movie_obj.data)
