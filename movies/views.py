@@ -42,6 +42,17 @@ class MovieDetailView(APIView):
 
         return Response(movie_obj.data)
 
+    def patch(self, request: Request, movie_id: int) -> Response:
+        movie = get_object_or_404(Movie, id=movie_id)
+
+        movie_obj = MovieSerializer(movie, request.data, partial=True)
+
+        movie_obj.is_valid(raise_exception=True)
+
+        movie_obj.save()
+
+        return Response(movie_obj.data)
+
     def delete(self, request: Request, movie_id: int) -> Response:
         movie = get_object_or_404(Movie, id=movie_id)
 
