@@ -1,3 +1,4 @@
+from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 
@@ -9,7 +10,12 @@ class ReviewRecommendations(models.TextChoices):
 
 
 class Review(models.Model):
-    stars = models.IntegerField()
+    stars = models.IntegerField(
+        validators=[
+            MinValueValidator(1, "Ensure this value is greater than or equal to 1."),
+            MaxValueValidator(10, "Ensure this value is less than or equal to 10."),
+        ]
+    )
     review = models.TextField()
     spoilers = models.BooleanField(default=False)
     recommendation = models.CharField(
@@ -22,7 +28,7 @@ class Review(models.Model):
         on_delete=models.CASCADE,
         related_name="reviews",
     )
-    user = models.ForeignKey(
+    critic = models.ForeignKey(
         "users.User",
         on_delete=models.CASCADE,
         related_name="reviews",
