@@ -1,3 +1,4 @@
+import ipdb
 from genres.models import Genre
 from genres.serializers import GenreSerializer
 from rest_framework import serializers
@@ -25,3 +26,22 @@ class MovieSerializer(serializers.Serializer):
             movie.genres.add(genre_obj)
 
         return movie
+
+    def update(self, instance: Movie, validated_data: dict) -> Movie:
+        for key, value in validated_data.items():
+            if key == "genres":
+
+                genres = []
+
+                for genre in value:
+                    genre_obj, _ = Genre.objects.get_or_create(**genre)
+
+                    genres.append(genre_obj)
+
+                instance.genres.set(genres)
+            else:
+                setattr(instance, key, value)
+
+        instance.save()
+
+        return instance
