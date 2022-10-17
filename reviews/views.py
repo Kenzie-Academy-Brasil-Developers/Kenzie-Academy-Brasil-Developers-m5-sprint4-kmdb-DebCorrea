@@ -6,6 +6,7 @@ from users.models import User
 
 from reviews.permissions import IsAuthenticatedOrReadOnly
 
+from .models import Review
 from .serializers import ReviewSerializer
 
 
@@ -26,3 +27,12 @@ class ReviewView(APIView):
         review.save(movie=movie, critic=critic)
 
         return Response(review.data, status.HTTP_201_CREATED)
+
+    def get(self, request: Request, movie_id) -> Response:
+        movie = get_object_or_404(Movie, id=movie_id)
+
+        reviews = Review.objects.filter(movie=movie)
+
+        reviews_obj = ReviewSerializer(reviews, many=True)
+
+        return Response(reviews_obj.data)
