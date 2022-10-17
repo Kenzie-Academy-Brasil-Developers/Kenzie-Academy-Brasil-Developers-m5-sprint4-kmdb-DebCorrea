@@ -36,3 +36,16 @@ class ReviewView(APIView):
         reviews_obj = ReviewSerializer(reviews, many=True)
 
         return Response(reviews_obj.data)
+
+
+class ReviewDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+
+    permission_classes = [IsAuthenticatedOrReadOnly]
+
+    def get(self, request: Request, movie_id: int, review_id: int) -> Response:
+        review = get_object_or_404(Review, id=review_id)
+
+        review_obj = ReviewSerializer(review)
+
+        return Response(review_obj.data)
