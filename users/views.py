@@ -1,3 +1,70 @@
-from django.shortcuts import render
+from django.contrib.auth import authenticate
+from django.shortcuts import get_object_or_404
+from rest_framework.authentication import TokenAuthentication
+from rest_framework.authtoken.models import Token
+from rest_framework.pagination import PageNumberPagination
+from rest_framework.views import APIView, Request, Response, status
 
-# Create your views here.
+from .models import User
+from .permissions import IsAdmin, IsAdminOrOwner
+from .serializers import UserLoginSerializer, UserSerializer
+
+
+class UserRegisterView(APIView):
+    def post(self, request: Request) -> Response:
+        user = UserSerializer(data=request.data)
+
+        user.is_valid(raise_exception=True)
+
+        user.save()
+
+        return Response(user.data, status.HTTP_201_CREATED)
+
+
+class UserLoginView(APIView):
+    def post(self, request: Request) -> Response:
+        login_serializer = UserLoginSerializer(data=request.data)
+
+        login_serializer.is_valid(raise_exception=True)
+
+        user = authenticate(**login_serializer.validated_data)
+
+        if not user:
+            return Response(
+                {"detail": "invalid username or password"},
+                status.HTTP_400_BAD_REQUEST,
+            )
+
+        token, _ = Token.objects.get_or_create(user=user)
+
+        return Response({"token": token.key})
+
+
+class UserView(APIView, PageNumberPagination):
+    authentication_classes = [TokenAuthentication]
+
+    permission_classes = [IsAdmin]
+
+    def get(self, request: Request):
+        users = User.objects.all()
+
+        result_page = self.paginate_queryset(users, request, view=self)
+
+        users_serializer = UserSerializer(result_page, many=True)
+
+        return self.get_paginated_response(users_serializer.data)
+
+
+class UserDetailView(APIView):
+    authentication_classes = [TokenAuthentication]
+
+    permission_classes = [IsAdminOrOwner]
+
+    def get(self, request: Request, user_id: int) -> Response:
+        user = get_object_or_404(User, id=user_id)
+
+        self.check_object_permissions(request, user)
+
+        user_serializer = UserSerializer(user)
+
+        return Response(user_serializer.data)
