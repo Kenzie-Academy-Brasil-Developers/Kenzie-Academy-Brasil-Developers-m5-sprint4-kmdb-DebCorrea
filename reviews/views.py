@@ -1,6 +1,7 @@
 from django.shortcuts import get_object_or_404
 from movies.models import Movie
 from rest_framework.authentication import TokenAuthentication
+from rest_framework.pagination import PageNumberPagination
 from rest_framework.views import APIView, Request, Response, status
 from users.models import User
 
@@ -10,7 +11,7 @@ from .models import Review
 from .serializers import ReviewSerializer
 
 
-class ReviewView(APIView):
+class ReviewView(APIView, PageNumberPagination):
     authentication_classes = [TokenAuthentication]
 
     permission_classes = [IsAuthenticatedOrReadOnly]
@@ -28,14 +29,16 @@ class ReviewView(APIView):
 
         return Response(review.data, status.HTTP_201_CREATED)
 
-    def get(self, request: Request, movie_id) -> Response:
+    def get(self, request: Request, movie_id):
         movie = get_object_or_404(Movie, id=movie_id)
 
         reviews = Review.objects.filter(movie=movie)
 
-        reviews_obj = ReviewSerializer(reviews, many=True)
+        result_page = self.paginate_queryset(reviews, request, view=self)
 
-        return Response(reviews_obj.data)
+        reviews_obj = ReviewSerializer(result_page, many=True)
+
+        return self.get_paginated_response(reviews_obj.data)
 
 
 class ReviewDetailView(APIView):
