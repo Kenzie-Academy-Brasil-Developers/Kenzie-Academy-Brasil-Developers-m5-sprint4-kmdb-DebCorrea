@@ -4,7 +4,7 @@ from rest_framework.authentication import TokenAuthentication
 from rest_framework.views import APIView, Request, Response, status
 from users.models import User
 
-from reviews.permissions import IsAuthenticatedOrReadOnly
+from reviews.permissions import IsAdminOrOwner, IsAuthenticatedOrReadOnly
 
 from .models import Review
 from .serializers import ReviewSerializer
@@ -41,7 +41,7 @@ class ReviewView(APIView):
 class ReviewDetailView(APIView):
     authentication_classes = [TokenAuthentication]
 
-    permission_classes = [IsAuthenticatedOrReadOnly]
+    permission_classes = [IsAuthenticatedOrReadOnly, IsAdminOrOwner]
 
     def get(self, request: Request, movie_id: int, review_id: int) -> Response:
         review = get_object_or_404(Review, id=review_id)
@@ -49,3 +49,17 @@ class ReviewDetailView(APIView):
         review_obj = ReviewSerializer(review)
 
         return Response(review_obj.data)
+
+    def delete(
+        self,
+        request: Request,
+        movie_id: int,
+        review_id: int,
+    ) -> Response:
+        review = get_object_or_404(Review, id=review_id)
+
+        self.check_object_permissions(request, review)
+
+        review.delete()
+
+        return Response(status=status.HTTP_204_NO_CONTENT)
