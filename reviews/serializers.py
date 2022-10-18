@@ -24,7 +24,7 @@ class ReviewSerializer(serializers.ModelSerializer):
             "stars",
             "review",
             "spoilers",
-            "recommendation",
+            "recomendation",
             "movie",
             "critic",
         ]

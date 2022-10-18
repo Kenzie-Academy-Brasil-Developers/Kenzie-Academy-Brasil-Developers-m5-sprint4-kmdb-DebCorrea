@@ -18,7 +18,7 @@ class Review(models.Model):
     )
     review = models.TextField()
     spoilers = models.BooleanField(default=False)
-    recommendation = models.CharField(
+    recomendation = models.CharField(
         max_length=50,
         choices=ReviewRecommendations.choices,
         default=ReviewRecommendations.NO_OPINION,
